@@ -5,12 +5,22 @@ import StaffList from "@/components/StaffList";
 import StaffForm from "@/components/StaffForm";
 import { initialStaffData } from "@/data/staffData";
 import { useToast } from "@/components/ui/use-toast";
+import { useStaffFilters } from "@/hooks/useStaffFilters";
 
 const Index = () => {
   const [staffList, setStaffList] = useState<Staff[]>([]);
   const [formOpen, setFormOpen] = useState(false);
   const [staffToEdit, setStaffToEdit] = useState<Staff | null>(null);
   const { toast } = useToast();
+  
+  // Setup filter system
+  const {
+    filters,
+    updateFilter,
+    resetFilters,
+    filteredStaff,
+    hasActiveFilters
+  } = useStaffFilters(staffList);
 
   // Load initial data
   useEffect(() => {
@@ -56,7 +66,12 @@ const Index = () => {
 
       <main>
         <StaffList 
-          staffList={staffList} 
+          staffList={staffList}
+          filteredStaff={filteredStaff}
+          filters={filters}
+          updateFilter={updateFilter}
+          resetFilters={resetFilters}
+          hasActiveFilters={hasActiveFilters}
           onAddStaff={handleAddStaff} 
           onEditStaff={handleEditStaff} 
         />

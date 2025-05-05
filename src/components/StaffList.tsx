@@ -4,14 +4,30 @@ import { Staff } from "@/types/staff";
 import StaffCard from "./StaffCard";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
+import FilterBar from "./filters/FilterBar";
+import { StaffFilters } from "@/types/filters";
 
 interface StaffListProps {
   staffList: Staff[];
+  filteredStaff: Staff[];
+  filters: StaffFilters;
+  updateFilter: <K extends keyof StaffFilters>(key: K, value: StaffFilters[K]) => void;
+  resetFilters: () => void;
+  hasActiveFilters: boolean;
   onAddStaff: () => void;
   onEditStaff: (staff: Staff) => void;
 }
 
-const StaffList: React.FC<StaffListProps> = ({ staffList, onAddStaff, onEditStaff }) => {
+const StaffList: React.FC<StaffListProps> = ({ 
+  staffList, 
+  filteredStaff,
+  filters,
+  updateFilter,
+  resetFilters,
+  hasActiveFilters,
+  onAddStaff, 
+  onEditStaff 
+}) => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -21,6 +37,13 @@ const StaffList: React.FC<StaffListProps> = ({ staffList, onAddStaff, onEditStaf
           <span>Add Staff</span>
         </Button>
       </div>
+
+      <FilterBar 
+        filters={filters}
+        updateFilter={updateFilter}
+        resetFilters={resetFilters}
+        hasActiveFilters={hasActiveFilters}
+      />
       
       <div className="space-y-4">
         {staffList.length === 0 ? (
@@ -34,8 +57,19 @@ const StaffList: React.FC<StaffListProps> = ({ staffList, onAddStaff, onEditStaf
               Add your first staff member
             </Button>
           </div>
+        ) : filteredStaff.length === 0 ? (
+          <div className="text-center py-10 border rounded-lg">
+            <p className="text-muted-foreground">No staff members match your filters</p>
+            <Button 
+              variant="outline" 
+              className="mt-4" 
+              onClick={resetFilters}
+            >
+              Clear filters
+            </Button>
+          </div>
         ) : (
-          staffList.map((staff) => (
+          filteredStaff.map((staff) => (
             <StaffCard 
               key={staff.id} 
               staff={staff} 
