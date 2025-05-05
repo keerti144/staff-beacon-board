@@ -7,17 +7,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { analyzeStaffingForRole } from "@/utils/staffingAnalysis";
+import StaffingStatusCard from "./staffing/StaffingStatus";
 
 interface StaffFormProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   onSave: (staff: Staff) => void;
   staffToEdit?: Staff | null;
+  staffList: Staff[];
 }
 
 const roles: StaffRole[] = ["Chef", "Server", "Manager", "Host", "Bartender", "Dishwasher"];
 
-const StaffForm: React.FC<StaffFormProps> = ({ open, setOpen, onSave, staffToEdit }) => {
+const StaffForm: React.FC<StaffFormProps> = ({ open, setOpen, onSave, staffToEdit, staffList }) => {
   const [staff, setStaff] = useState<Staff>({
     id: "",
     name: "",
@@ -26,6 +29,11 @@ const StaffForm: React.FC<StaffFormProps> = ({ open, setOpen, onSave, staffToEdi
     shiftEnd: "17:00",
     status: "Active"
   });
+
+  const [staffingAlert, setStaffingAlert] = useState<{
+    status: "understaffed" | "optimal" | "overstaffed";
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     if (staffToEdit) {
@@ -43,6 +51,20 @@ const StaffForm: React.FC<StaffFormProps> = ({ open, setOpen, onSave, staffToEdi
     }
   }, [staffToEdit, open]);
 
+  // Check staffing status when role or shift times change
+  useEffect(() => {
+    if (!open || !staff.role) return;
+    
+    // For edit, filter out the current staff being edited to avoid counting them twice
+    const filteredStaffList = staffToEdit
+      ? staffList.filter(s => s.id !== staffToEdit.id)
+      : staffList;
+    
+    // Analyze staffing with start time (could also check end time)
+    const analysis = analyzeStaffingForRole(filteredStaffList, staff.role, staff.shiftStart);
+    setStaffingAlert(analysis);
+  }, [staff.role, staff.shiftStart, staff.shiftEnd, open, staffList, staffToEdit]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(staff);
@@ -57,6 +79,10 @@ const StaffForm: React.FC<StaffFormProps> = ({ open, setOpen, onSave, staffToEdi
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
+            {staffingAlert && (
+              <StaffingStatusCard status={staffingAlert.status} message={staffingAlert.message} />
+            )}
+            
             <div className="grid gap-2">
               <Label htmlFor="name">Name</Label>
               <Input

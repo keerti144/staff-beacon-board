@@ -6,6 +6,10 @@ import StaffForm from "@/components/StaffForm";
 import { initialStaffData } from "@/data/staffData";
 import { useToast } from "@/components/ui/use-toast";
 import { useStaffFilters } from "@/hooks/useStaffFilters";
+import { analyzeStaffing } from "@/utils/staffingAnalysis";
+import StaffingChart from "@/components/staffing/StaffingChart";
+import StaffingTable from "@/components/staffing/StaffingTable";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Index = () => {
   const [staffList, setStaffList] = useState<Staff[]>([]);
@@ -26,6 +30,9 @@ const Index = () => {
   useEffect(() => {
     setStaffList(initialStaffData);
   }, []);
+
+  // Staffing analysis based on current staff list
+  const staffingAnalysis = analyzeStaffing(staffList);
 
   const handleAddStaff = () => {
     setStaffToEdit(null);
@@ -64,17 +71,42 @@ const Index = () => {
         <p className="text-muted-foreground mt-1">Manage your restaurant staff schedule effectively</p>
       </header>
 
-      <main>
-        <StaffList 
-          staffList={staffList}
-          filteredStaff={filteredStaff}
-          filters={filters}
-          updateFilter={updateFilter}
-          resetFilters={resetFilters}
-          hasActiveFilters={hasActiveFilters}
-          onAddStaff={handleAddStaff} 
-          onEditStaff={handleEditStaff} 
-        />
+      <main className="space-y-8">
+        <Tabs defaultValue="staff" className="w-full">
+          <TabsList className="grid grid-cols-2 w-[400px] mb-6">
+            <TabsTrigger value="staff">Staff List</TabsTrigger>
+            <TabsTrigger value="analysis">Staffing Analysis</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="staff">
+            <StaffList 
+              staffList={staffList}
+              filteredStaff={filteredStaff}
+              filters={filters}
+              updateFilter={updateFilter}
+              resetFilters={resetFilters}
+              hasActiveFilters={hasActiveFilters}
+              onAddStaff={handleAddStaff} 
+              onEditStaff={handleEditStaff} 
+            />
+          </TabsContent>
+          
+          <TabsContent value="analysis">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold">Staffing Analysis</h2>
+              <p className="text-muted-foreground">
+                View staffing levels across different time periods to identify potential gaps or excess.
+              </p>
+              
+              <StaffingChart staffingAnalysis={staffingAnalysis} />
+              
+              <div className="mt-8">
+                <h3 className="text-xl font-medium mb-4">Detailed Staffing Requirements</h3>
+                <StaffingTable staffingAnalysis={staffingAnalysis} />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
 
       <StaffForm
@@ -82,6 +114,7 @@ const Index = () => {
         setOpen={setFormOpen}
         onSave={handleSaveStaff}
         staffToEdit={staffToEdit}
+        staffList={staffList}
       />
     </div>
   );
